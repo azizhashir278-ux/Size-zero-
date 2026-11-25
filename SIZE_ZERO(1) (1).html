@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#101722">
+<title>SIZE ZERO</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101722;font-family:Arial,sans-serif;color:#fff;touch-action:none}#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}#hud{position:fixed;inset:0;pointer-events:none}.top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.panel{background:rgba(9,16,25,.78);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:9px 11px;backdrop-filter:blur(7px);box-shadow:0 5px 18px #0004}.brand{font-weight:900;letter-spacing:2px;font-size:15px}.small{font-size:11px;color:#c5d1dd;margin-top:3px}.stats{display:grid;grid-template-columns:repeat(4,minmax(48px,1fr));gap:6px;min-width:min(58vw,300px)}.stat label{display:block;font-size:9px;color:#c5d1dd;margin-bottom:4px}.bar{height:6px;background:#34404c;border-radius:8px;overflow:hidden}.fill{height:100%;width:100%;background:#70d69a;transition:width .15s}.fill.hunger{background:#f4c15d}.fill.thirst{background:#5fc7f5}.fill.stamina{background:#b5a0ff}.rightInfo{text-align:right;font-size:11px;line-height:1.5}.notice{position:absolute;top:90px;left:50%;transform:translateX(-50%);background:#101a27df;border:1px solid #ffffff30;padding:9px 14px;border-radius:10px;text-align:center;max-width:85vw;font-size:12px;opacity:0;transition:opacity .2s}.notice.show{opacity:1}.bottom{position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-end}.joystick{width:112px;height:112px;border-radius:50%;background:#ffffff18;border:2px solid #ffffff55;position:relative;pointer-events:auto;touch-action:none}.stick{width:42px;height:42px;border-radius:50%;background:#dce9f3aa;border:2px solid #fff;position:absolute;left:33px;top:33px;box-shadow:0 2px 8px #0006}.actions{display:grid;grid-template-columns:repeat(2,64px);gap:8px;pointer-events:auto}.act{height:54px;border-radius:15px;border:1px solid #ffffff66;background:#142438df;color:white;font-weight:bold;font-size:11px;touch-action:none;box-shadow:0 3px 9px #0005}.act:active{background:#41658a}.act.wide{grid-column:span 2;height:43px}.hint{position:absolute;bottom:132px;left:50%;transform:translateX(-50%);font-size:11px;color:#fff;background:#101a27bb;padding:7px 10px;border-radius:8px;white-space:nowrap}.desktop{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:10px;color:#dce5ed;background:#101a27aa;padding:7px 10px;border-radius:8px;white-space:nowrap}.menu{position:fixed;inset:0;background:linear-gradient(145deg,#0b1420ed,#17283bed);display:flex;align-items:center;justify-content:center;padding:20px;z-index:5}.card{width:min(460px,100%);background:#111e2c;border:1px solid #ffffff25;border-radius:20px;padding:24px;box-shadow:0 20px 70px #0009}.card h1{font-size:36px;letter-spacing:5px;margin:0 0 5px}.tag{color:#a9c5dc;font-size:12px;letter-spacing:2px}.card p{color:#c5d1dd;font-size:13px;line-height:1.55}.primary{width:100%;padding:14px;border:0;border-radius:12px;background:#b9ef71;color:#14200c;font-weight:900;font-size:15px;margin-top:12px}.secondary{width:100%;padding:11px;border:1px solid #ffffff30;border-radius:12px;background:#1d3043;color:white;margin-top:8px}.hidden{display:none!important}#death{z-index:6}.eventTag{color:#ffd27a;font-weight:bold}.mobileOnly{display:none}@media(max-width:700px){.mobileOnly{display:block}.desktop{display:none}.top{top:7px;left:7px;right:7px}.brand{font-size:12px}.small{font-size:9px}.stats{min-width:48vw;gap:4px}.panel{padding:7px 8px}.stat label{font-size:8px}.rightInfo{font-size:9px}.notice{top:84px}.hint{bottom:132px}.joystick{width:104px;height:104px}.stick{left:30px;top:30px}.actions{grid-template-columns:repeat(2,58px);gap:6px}.act{height:49px;font-size:10px}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud" class="hidden">
+ <div class="top">
+  <div class="panel"><div class="brand">SIZE ZERO</div><div class="small" id="roomName">LIVING ROOM</div></div>
+  <div class="panel stats">
+   <div class="stat"><label>HEALTH</label><div class="bar"><div class="fill" id="healthBar"></div></div></div>
+   <div class="stat"><label>HUNGER</label><div class="bar"><div class="fill hunger" id="hungerBar"></div></div></div>
+   <div class="stat"><label>THIRST</label><div class="bar"><div class="fill thirst" id="thirstBar"></div></div></div>
+   <div class="stat"><label>STAMINA</label><div class="bar"><div class="fill stamina" id="staminaBar"></div></div></div>
+  </div>
+  <div class="panel rightInfo"><div>TIME <b id="timeText">00:00</b></div><div>SURVIVED <b id="scoreText">0s</b></div><div>ITEMS <b id="itemText">0</b></div></div>
+ </div>
+ <div class="notice" id="notice"></div>
+ <div class="hint" id="hint">Explore the house. Find food and water.</div>
+ <div class="bottom mobileOnly">
+  <div class="joystick" id="joy"><div class="stick" id="stick"></div></div>
+  <div class="actions"><button class="act" id="jumpBtn">JUMP</button><button class="act" id="runBtn">RUN</button><button class="act" id="useBtn">INTERACT</button><button class="act" id="eatBtn">EAT / DRINK</button><button class="act wide" id="craftBtn">CRAFT: SIMPLE SHELTER</button></div>
+ </div>
+ <div class="desktop">WASD move · Mouse drag camera · Space jump · Shift run · E interact · F eat/drink · C craft</div>
+</div>
+<div class="menu" id="startMenu"><div class="card"><div class="tag">A TINY HUMAN. AN ORDINARY HOUSE. A VERY BAD DAY.</div><h1>SIZE ZERO</h1><p>Survive inside a normal house at a very abnormal size. Avoid the cat, vacuum cleaner and giant footsteps. Collect crumbs, find water and see how long you last.</p><p><b>Controls:</b> Mobile joystick and buttons, or WASD + mouse + keyboard.</p><button class="primary" id="startBtn">START SURVIVING</button><button class="secondary" id="howBtn">HOW TO PLAY</button><p id="howText" class="hidden">Walls are solid: use the visible doorways to enter other rooms. If a route is blocked by furniture, jump onto low objects and cross over them. Jump onto low furniture to climb across the bed, tables and counters. The bathtub is an open basin: if you fall inside, jump toward a rim to escape. Explore and collect glowing crumbs and water drops. Avoid the cat, vacuum, Dad and insects. Press E to collect, F to eat or drink, Space to jump and C to craft. If health reaches zero, the entire survival session restarts.</p></div></div>
+<div class="menu hidden" id="death"><div class="card"><div class="tag">SURVIVAL SESSION ENDED</div><h1>CAUGHT.</h1><p id="deathReason">You didn't survive this time.</p><p>Survival time: <b id="finalTime">0s</b></p><p>Collected items: <b id="finalItems">0</b></p><button class="primary" id="restartBtn">RESTART SESSION</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+(()=>{
+'use strict';
+const mount=document.getElementById('game');
+if(!window.THREE){mount.innerHTML='<div style="color:white;padding:25px">Three.js could not load. Check your internet connection and reload.</div>';return;}
+const THREE=window.THREE;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9db3c5);scene.fog=new THREE.Fog(0x9db3c5,32,75);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.05,150);
+const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;mount.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xdcecff,0x65543e,1.45));const sun=new THREE.DirectionalLight(0xffe5bd,2.0);sun.position.set(-8,15,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-25;sun.shadow.camera.right=25;sun.shadow.camera.top=25;sun.shadow.camera.bottom=-25;scene.add(sun);
+const mat=(color,rough=.85)=>new THREE.MeshStandardMaterial({color,roughness:rough});
+const M={floor:mat(0x9b795a),wall:mat(0xe4dfd2),wood:mat(0x79543a),dark:mat(0x49382c),fabric:mat(0x687c8d),cream:mat(0xd7c7a5),metal:mat(0x89949b,.45),white:mat(0xe9e8e2),black:mat(0x20252a),crumb:mat(0xdba84d),water:mat(0x55b9d7,.3),red:mat(0xa94d43),green:mat(0x64865a)};
+const boxGeo=new THREE.BoxGeometry(1,1,1);const sphereGeo=new THREE.SphereGeometry(1,10,8);
+function cube(parent,name,x,y,z,sx,sy,sz,material,opts={}){const o=new THREE.Mesh(boxGeo,material);o.name=name;o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=opts.shadow!==false;o.receiveShadow=true;parent.add(o);return o;}
+function sphere(parent,x,y,z,r,material){const o=new THREE.Mesh(sphereGeo,material);o.position.set(x,y,z);o.scale.set(r,r,r);o.castShadow=true;parent.add(o);return o;}
+const world=new THREE.Group();scene.add(world);
+// House is a connected, simple floor plan: living room west, kitchen north, bedroom east, bathroom south-east.
+const bounds={minX:-15,maxX:15,minZ:-11,maxZ:11};
+cube(world,'house floor',0,-.18,0,30,.35,22,M.floor);
+// Solid house walls. Every wall segment also gets a matching player collider.
+const colliders=[];
+function addCollider(x,z,hx,hz,top=4.2,name='obstacle'){
+ colliders.push({minX:x-hx,maxX:x+hx,minZ:z-hz,maxZ:z+hz,top,name});
+}
+function wall(x,z,sx,sz){cube(world,'wall',x,2.1,z,sx,4.2,sz,M.wall);addCollider(x,z,sx/2,sz/2,4.2,'wall');}
+// Exterior walls: the south entrance is a real opening, not a walk-through wall.
+wall(0,4.95,30,.25);wall(-14.9,0,.25,10);wall(14.9,0,.25,10);
+wall(-8.2,-10.95,13.6,.25);wall(8.2,-10.95,13.6,.25);
+// Room partitions with proper 1.8-unit door openings.
+// Living room / central hall: doorway at z=1.
+wall(-2,-2.45,.22,3.1);wall(-2,3.05,.22,1.9);
+// Kitchen / living room: doorway at x=-8.
+wall(-11.1,-4,4.2,.22);wall(-4.9,-4,4.2,.22);
+// Bedroom / hall: doorway at z=1.
+wall(5,-2.55,.22,3.05);wall(5,3.05,.22,1.9);
+// Bathroom / bedroom: doorway at x=8.5.
+wall(6.6,-4,1.6,.22);wall(11.4,-4,2.6,.22);
+// Simple visible door frames make the openings easy to recognize.
+function doorFrame(x,z,axis='x'){
+ if(axis==='x'){
+  cube(world,'door frame',x-.92,1.35,z,.12,2.7,.14,M.wood);cube(world,'door frame',x+.92,1.35,z,.12,2.7,.14,M.wood);cube(world,'door lintel',x,2.7,z,2,.14,.16,M.wood);
+ }else{
+  cube(world,'door frame',x,1.35,z-.92,.14,2.7,.12,M.wood);cube(world,'door frame',x,1.35,z+.92,.14,2.7,.12,M.wood);cube(world,'door lintel',x,2.7,z, .16,.14,2,M.wood);
+ }
+}
+doorFrame(-2,1,'z');doorFrame(-8,-4,'x');doorFrame(5,1,'z');doorFrame(8.5,-4,'x');doorFrame(0,-10.95,'x');
+// Room labels via subtle colored rugs.
+cube(world,'living rug',-8,-.005,0,9,.025,7,M.fabric,{shadow:false});cube(world,'kitchen rug',-8,-.002,-7,9,.025,3,M.cream,{shadow:false});cube(world,'bedroom rug',9,-.002,0,8,.025,7,M.red,{shadow:false});cube(world,'bathroom tile',9,-.001,-7.5,8,.03,6,M.white,{shadow:false});
+// Living room sofa and table.
+cube(world,'sofa base',-10,.8,1,5,1.1,2.1,M.fabric);cube(world,'sofa back',-10,1.65,2,5,1.3,.45,M.fabric);cube(world,'sofa arm',-12.25,1.25,1, .5,1.4,2.2,M.fabric);cube(world,'sofa arm',-7.75,1.25,1,.5,1.4,2.2,M.fabric);
+cube(world,'coffee table',-6,.65,-1,3, .22,2,M.wood);for(const x of [-7.2,-4.8])for(const z of [-1.7,-.3])cube(world,'table leg',x,.3,z,.18,.6,.18,M.dark);
+cube(world,'TV cabinet',-13,.65,-3,2.5,1.2,1,M.wood);cube(world,'television',-13,1.9,-3,2.8,1.7,.18,M.black);
+// Kitchen counters and fridge.
+cube(world,'counter',-9,.9,-8.8,8,.8,1.3,M.cream);cube(world,'counter top',-9,1.35,-8.8,8,.12,1.4,M.white);cube(world,'fridge',-13,1.8,-6.1,1.8,3.6,1.7,M.white);cube(world,'fridge handle',-12.1,1.8,-5.2,.08,1,.08,M.metal);
+// Bedroom furniture.
+cube(world,'bed frame',9,.55,.4,5, .55,4,M.wood);cube(world,'mattress',9,.95,.4,5,.45,4,M.white);cube(world,'pillow',7.6,1.22,-.8,1.5,.35,1,M.cream);cube(world,'wardrobe',13,2,3,2.2,4,2,M.wood);cube(world,'nightstand',5.8,.6,-2,1.4,1.2,1.2,M.wood);
+// Bathroom tub, water surface, sink.
+cube(world,'bathtub base',9,.16,-7.3,5.5,.32,3.2,M.white);cube(world,'bathtub front rim',9,.78,-8.82,5.5,1.24,.16,M.white);cube(world,'bathtub back rim',9,.78,-5.78,5.5,1.24,.16,M.white);cube(world,'bathtub left rim',6.34,.78,-7.3,.16,1.24,3.05,M.white);cube(world,'bathtub right rim',11.66,.78,-7.3,.16,1.24,3.05,M.white);cube(world,'bathtub water',9,.48,-7.3,5.15,.06,2.85,M.water);cube(world,'sink pedestal',13,.65,-9.5,1.2,1.3,1.2,M.white);sphere(world,13,1.4,-9.5,.7,M.white);
+// Doors/household clutter landmarks.
+cube(world,'plant pot',-13,.35,3,.8,.7,.8,M.dark);for(let i=0;i<5;i++)sphere(world,-13+Math.sin(i)*.4,.9+i*.13,3+Math.cos(i)*.3,.42,M.green);
+// Character model, about 0.35 units tall.
+const player=new THREE.Group();scene.add(player);player.position.set(-5.45,.08,2.65);
+let verticalVelocity=0,grounded=true,jumpQueued=false;const PLAYER_RADIUS=.17,GROUND_Y=.08;
+const skin=mat(0xd9a47f),shirt=mat(0x3e8b9c),pants=mat(0x303c56),shoe=mat(0x292b30);
+sphere(player,0,.32,0,.13,skin);cube(player,'torso',0,.15,0,.22,.28,.14,shirt);
+const playerLegL=cube(player,'legL',-.065,-.08,0,.075,.2,.09,pants),playerLegR=cube(player,'legR',.065,-.08,0,.075,.2,.09,pants);
+const playerArmL=cube(player,'armL',-.16,.16,0,.07,.23,.07,skin),playerArmR=cube(player,'armR',.16,.16,0,.07,.23,.07,skin);sphere(player,0,.38,.105,.018,mat(0x222222));
+// Furniture collision and climbable surfaces. The player can jump onto low objects.
+const furniture=[
+ {x:-10,z:1,hx:2.5,hz:1.05,top:1.35,name:'sofa'},
+ {x:-6,z:-1,hx:1.5,hz:1,top:.78,name:'coffee table'},
+ {x:-13,z:-3,hx:1.35,hz:.55,top:1.25,name:'TV cabinet'},
+ {x:-9,z:-8.8,hx:4,hz:.72,top:1.42,name:'kitchen counter'},
+ {x:-13,z:-6.1,hx:.9,hz:.85,top:3.6,name:'fridge'},
+ {x:9,z:.4,hx:2.5,hz:2,top:1.18,name:'bed'},
+ {x:13,z:3,hx:1.1,hz:1,top:4,name:'wardrobe'},
+ {x:5.8,z:-2,hx:.7,hz:.6,top:1.2,name:'nightstand'},
+ {x:13,z:-9.5,hx:.8,hz:.8,top:1.3,name:'sink'}
+];
+furniture.forEach(o=>addCollider(o.x,o.z,o.hx,o.hz,o.top,o.name));
+// Extra solid boundaries for tall/small props that were previously visual-only.
+// TV body: blocks passage above the TV cabinet as well as at its sides.
+addCollider(-13,-3,1.48,.18,2.85,'television');
+// Potted plant: the pot and dense leaves form one simple collision volume.
+// It is deliberately not a climbable surface.
+addCollider(-13,3,.52,.52,1.75,'potted plant');
+// The bathtub is hollow: only its raised rim walls block movement, leaving the water basin accessible.
+addCollider(9,-8.82,2.75,.09,1.4,'tub rim');addCollider(9,-5.78,2.75,.09,1.4,'tub rim');addCollider(6.34,-7.3,.09,1.52,1.4,'tub rim');addCollider(11.66,-7.3,.09,1.52,1.4,'tub rim');
+// Collectibles, randomly placed around walkable areas.
+const pickups=[];const pickupMat={crumb:mat(0xf4c34e,.45),water:mat(0x52d6ff,.3),fiber:mat(0x9f8bca)};
+function addPickup(type,x,z){const g=new THREE.Group();const mesh=sphere(g,0,.13,0,type==='crumb'?.13:.11,pickupMat[type]);g.position.set(x,.04,z);world.add(g);pickups.push({group:g,type,alive:true});}
+[[-8,0],[-5,1],[-11,-2],[-8,-7],[-6,-9],[7,3],[11,2],[12,-2],[5,-4],[10,-9],[0,2],[-1,-5]].forEach((p,i)=>addPickup(i%4===0?'water':i%5===0?'fiber':'crumb',p[0],p[1]));
+// Cat: upgraded layered 3D model with shaped body, face, ears, paws, eyes and articulated legs.
+const cat=new THREE.Group();world.add(cat);
+const catFur=mat(0xb9783e),catLight=mat(0xe4b77c),catStripe=mat(0x583923),catInner=mat(0x9b5e52),catEye=mat(0x9bc64e,.35),catPupil=mat(0x111713,.25),catNose=mat(0xd8898b,.4),catWhite=mat(0xf0e4d1);
+function ellipsoid(parent,x,y,z,sx,sy,sz,material){const o=sphere(parent,x,y,z,1,material);o.scale.set(sx,sy,sz);return o;}
+ellipsoid(cat,0,.72,-.08,.78,.48,.43,catFur); // torso
+ellipsoid(cat,0,.76,.34,.43,.43,.38,catLight); // chest
+const catHead=new THREE.Group();catHead.position.set(0,1.02,.48);cat.add(catHead);
+ellipsoid(catHead,0,.16,.12,.43,.39,.39,catFur);
+for(const side of [-1,1]){
+ const ear=new THREE.Mesh(new THREE.ConeGeometry(.19,.43,5),catFur);ear.position.set(side*.27,.52,.04);ear.rotation.z=side*-.16;ear.castShadow=true;catHead.add(ear);
+ const inner=new THREE.Mesh(new THREE.ConeGeometry(.105,.27,5),catInner);inner.position.set(side*.27,.53,.105);inner.rotation.z=side*-.16;catHead.add(inner);
+ ellipsoid(catHead,side*.17,.2,.455,.105,.115,.045,catWhite);
+ ellipsoid(catHead,side*.17,.2,.495,.047,.075,.025,catEye);
+ ellipsoid(catHead,side*.17,.2,.516,.018,.061,.012,catPupil);
+ ellipsoid(catHead,side*.17,.235,.531,.012,.018,.009,catWhite);
+ // whiskers
+ for(let k=0;k<3;k++){const whisk=cube(catHead,'cat whisker',side*.38,.02-k*.055,.49,.34,.012,.012,catWhite);whisk.rotation.z=side*(.06+k*.09);}
+}
+ellipsoid(catHead,0,.015,.48,.19,.13,.12,catLight);
+ellipsoid(catHead,0,.08,.585,.065,.045,.035,catNose);
+// Mouth lines
+const mouthL=cube(catHead,'cat mouth',-.045,-.055,.59,.012,.09,.012,catStripe);mouthL.rotation.z=-.45;
+const mouthR=cube(catHead,'cat mouth',.045,-.055,.59,.012,.09,.012,catStripe);mouthR.rotation.z=.45;
+// Four articulated legs, with paws and gentle walking animation.
+const catLegs=[];
+for(const x of [-.48,.48])for(const z of [-.32,.35]){
+ const leg=new THREE.Group();leg.position.set(x,.56,z);cat.add(leg);
+ cube(leg,'cat lower leg',0,-.22,0,.19,.43,.19,catFur);
+ ellipsoid(leg,0,-.43,.055,.145,.09,.19,catLight);
+ catLegs.push(leg);
+}
+// Long curved tail with several connected segments.
+const tailGroup=new THREE.Group();tailGroup.position.set(0,.82,-.43);cat.add(tailGroup);
+for(let i=0;i<5;i++){const seg=ellipsoid(tailGroup,0,.06+i*.16,-.06-i*.13,.105-i*.009,.19,.105-i*.009,i%2?catStripe:catFur);seg.rotation.x=-.35;}
+cat.position.set(-12,.05,-1.8);
+// Vacuum cleaner with moving head and body.
+const vacuum=new THREE.Group();world.add(vacuum);cube(vacuum,'vac body',0,.38,0,1.15,.55,1.4,mat(0x687b91));cube(vacuum,'vac top',0,.68,-.1,.85,.12,.85,mat(0x9db2c3));cube(vacuum,'vac head',0,.13,.9,1.8,.18,.6,mat(0x343e48));for(const s of [-1,1]){const w=sphere(vacuum,s*.58,.12,-.3,.18,mat(0x20252a));w.scale.set(1,.7,1);}vacuum.position.set(-13,.05,0);
+// Dad is a complete giant 3D character, not just a pair of shoes.
+const dad=new THREE.Group();world.add(dad);dad.visible=false;
+const dadPants=mat(0x263b58),dadShirt=mat(0x557b9a),dadSkin=mat(0xc99572),dadShoe=mat(0x202329);
+cube(dad,'dad torso',0,4.25,0,2.15,2.7,1.15,dadShirt);
+sphere(dad,0,6.25,.05,.82,dadSkin);cube(dad,'dad hair',0,6.83,-.02,1.45,.38,1.35,mat(0x30271f));
+const dadArmL=new THREE.Group(),dadArmR=new THREE.Group();dadArmL.position.set(-1.2,5.1,0);dadArmR.position.set(1.2,5.1,0);dad.add(dadArmL,dadArmR);
+cube(dadArmL,'dad left arm',0,-.85,0,.48,1.9,.5,dadShirt);cube(dadArmL,'dad left hand',0,-1.85,.05,.4,.42,.42,dadSkin);
+cube(dadArmR,'dad right arm',0,-.85,0,.48,1.9,.5,dadShirt);cube(dadArmR,'dad right hand',0,-1.85,.05,.4,.42,.42,dadSkin);
+const dadLegL=new THREE.Group(),dadLegR=new THREE.Group();dadLegL.position.set(-.58,2.15,0);dadLegR.position.set(.58,2.15,0);dad.add(dadLegL,dadLegR);
+for(const leg of [dadLegL,dadLegR]){cube(leg,'dad trouser leg',0,-.88,0,.68,1.8,.72,dadPants);cube(leg,'dad shoe',0,-1.9,.42,1.12,.42,1.85,dadShoe);}
+const footA=dadLegL,footB=dadLegR;dad.position.set(-13,0,3.55);
+// Insects: small moving beetles/ants.
+const insects=[];function makeInsect(x,z){const g=new THREE.Group();sphere(g,0,.11,0,.13,mat(0x29231e));sphere(g,0,.11,.15,.09,mat(0x47362a));for(const s of [-1,1])for(let i=0;i<3;i++){const l=cube(g,'insect leg',s*.12,.07,(i-1)*.1,.035,.035,.18,mat(0x211b18));l.rotation.x=.3;}g.position.set(x,.02,z);world.add(g);insects.push({g,dir:Math.random()*6.28,speed:.45+Math.random()*.35});}
+for(let i=0;i<4;i++)makeInsect(-5+Math.random()*10,-4+Math.random()*7);
+// Game state.
+let running=false,dead=false,startTime=0,last=performance.now(),elapsed=0,health=100,hunger=100,thirst=100,stamina=100,items=0,crumbs=0,water=0,fiber=0,crafts=0,noticeTimer=0,eventTimer=20,scheduledTimer=35,catTimer=0,vacTimer=0,footTimer=0,damageCooldown=0,spawnTimer=0,activeHazard='';
+const keys={};let joy={x:0,y:0,active:false},cameraYaw=0,cameraPitch=.27,dragging=false,lastX=0,lastY=0,runHeld=false;
+const ui=id=>document.getElementById(id);function message(t){ui('notice').textContent=t;ui('notice').classList.add('show');noticeTimer=3.2;}
+function updateHUD(){ui('healthBar').style.width=health+'%';ui('hungerBar').style.width=hunger+'%';ui('thirstBar').style.width=thirst+'%';ui('staminaBar').style.width=stamina+'%';ui('scoreText').textContent=Math.floor(elapsed)+'s';ui('timeText').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(Math.floor(elapsed%60)).padStart(2,'0');ui('itemText').textContent=items;}
+function room(){const p=player.position;if(p.z>4)return 'HALLWAY';if(p.z<-4&&p.x<0)return 'KITCHEN';if(p.z<-4&&p.x>5)return 'BATHROOM';if(p.x>5)return 'BEDROOM';return 'LIVING ROOM';}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function distance2(a,b){return Math.hypot(a.x-b.x,a.z-b.z);}
+function circleHitsRect(x,z,r,c){const qx=clamp(x,c.minX,c.maxX),qz=clamp(z,c.minZ,c.maxZ);const dx=x-qx,dz=z-qz;return dx*dx+dz*dz<r*r;}
+function overlapsCollider(x,z,c){return circleHitsRect(x,z,PLAYER_RADIUS,c);}
+function blockedAt(x,z,y){for(const c of colliders){if(!circleHitsRect(x,z,PLAYER_RADIUS,c)||y>=c.top-.08)continue;if(c.name!=='wall'&&c.top<=1.55&&(jumpQueued||verticalVelocity>0))continue;return c;}return null;}
+function entityBlocked(x,z,r){for(const c of colliders){if(c.top<.35)continue;if(circleHitsRect(x,z,r,c))return c;}return null;}
+function moveEntityWithCollision(obj,dx,dz,r){let moved=false;const nx=obj.position.x+dx,nz=obj.position.z+dz;
+ if(!entityBlocked(nx,obj.position.z,r)){obj.position.x=nx;moved=true;}
+ if(!entityBlocked(obj.position.x,nz,r)){obj.position.z=nz;moved=true;}
+ return moved;
+}
+function movePlayer(dt){
+ let ix=0,iz=0;if(keys.KeyW||keys.ArrowUp)iz-=1;if(keys.KeyS||keys.ArrowDown)iz+=1;if(keys.KeyA||keys.ArrowLeft)ix-=1;if(keys.KeyD||keys.ArrowRight)ix+=1;ix+=joy.x;iz+=joy.y;
+ const len=Math.hypot(ix,iz);if(len>1){ix/=len;iz/=len;}const moving=len>.08;
+ const sprint=(keys.ShiftLeft||keys.ShiftRight||runHeld)&&stamina>1&&moving;const speed=sprint?3.5:2.15;
+ if(sprint)stamina=Math.max(0,stamina-23*dt);else stamina=Math.min(100,stamina+13*dt);
+ // Camera-relative movement. Forward is the direction the camera is looking toward on the floor plane.
+ const sin=Math.sin(cameraYaw),cos=Math.cos(cameraYaw);
+ const vx=(-sin)*(-iz)+(cos)*ix;
+ const vz=(-cos)*(-iz)+(-sin)*ix;
+ if(moving){const mag=Math.hypot(vx,vz)||1;const dx=vx/mag*speed*dt,dz=vz/mag*speed*dt;
+  // Resolve X and Z separately for reliable wall sliding; spawn is deliberately clear of furniture.
+  if(!blockedAt(player.position.x+dx,player.position.z,player.position.y))player.position.x+=dx;
+  if(!blockedAt(player.position.x,player.position.z+dz,player.position.y))player.position.z+=dz;
+  player.rotation.y=Math.atan2(vx,vz);
+ }
+ // Determine support under the character, including climbable furniture.
+ let support=GROUND_Y;
+ for(const c of furniture){if(circleHitsRect(player.position.x,player.position.z,PLAYER_RADIUS,c)&&player.position.y>=c.top-.1)support=Math.max(support,c.top);}
+ if(grounded&&player.position.y>support+.06){grounded=false;verticalVelocity=0;}
+ const oldY=player.position.y;
+ if(jumpQueued&&grounded){verticalVelocity=5.6;grounded=false;}
+ jumpQueued=false;
+ if(!grounded){verticalVelocity-=10.5*dt;player.position.y+=verticalVelocity*dt;}
+ let landing=GROUND_Y;
+ if(verticalVelocity<=0){for(const c of furniture){if(circleHitsRect(player.position.x,player.position.z,PLAYER_RADIUS,c)&&oldY>=c.top-.02&&player.position.y<=c.top)landing=Math.max(landing,c.top);}}
+ if(player.position.y<=landing){player.position.y=landing;verticalVelocity=0;grounded=true;}else grounded=false;
+ // Character limb animation makes locomotion visibly translate through the scene.
+ const stride=moving?Math.sin(elapsed*(sprint?13:9))*.48:0;
+ playerLegL.rotation.x=stride;playerLegR.rotation.x=-stride;playerArmL.rotation.x=-stride*.65;playerArmR.rotation.x=stride*.65;
+ // Keep the player inside the actual house footprint.
+ player.position.x=clamp(player.position.x,-14.55,14.55);player.position.z=clamp(player.position.z,-10.55,10.55);
+}
+function updateCamera(dt){const target=new THREE.Vector3(player.position.x,player.position.y+.45,player.position.z);const dist=5.5;const desired=new THREE.Vector3(target.x+Math.sin(cameraYaw)*dist*Math.cos(cameraPitch),target.y+2.1+Math.sin(cameraPitch)*dist,target.z+Math.cos(cameraYaw)*dist*Math.cos(cameraPitch));
+ const ray=new THREE.Raycaster(target,desired.clone().sub(target).normalize(),.25,dist);const hits=ray.intersectObjects(world.children,true);let wanted=desired;if(hits.length)wanted=target.clone().add(desired.clone().sub(target).normalize().multiplyScalar(Math.max(.8,hits[0].distance-.25)));
+ camera.position.lerp(wanted,1-Math.pow(.001,dt));camera.lookAt(target);}
+function nearestPickup(){let best=null,bd=1.25;for(const p of pickups)if(p.alive){const d=distance2(player.position,p.group.position);if(d<bd){bd=d;best=p;}}return best;}
+function interact(){const p=nearestPickup();if(p){p.alive=false;p.group.visible=false;items++;if(p.type==='crumb'){crumbs++;message('Collected a food crumb.');}else if(p.type==='water'){water++;message('Collected a water drop.');}else{fiber++;message('Collected a fibre scrap.');}updateHUD();return;}message('Nothing nearby to collect.');}
+function consume(){if(hunger<75&&crumbs>0){crumbs--;hunger=Math.min(100,hunger+32);message('You ate a food crumb.');}else if(thirst<75&&water>0){water--;thirst=Math.min(100,thirst+38);message('You drank a water drop.');}else message('No suitable supplies, or your meters are already high.');updateHUD();}
+function craft(){if(fiber>=2&&crumbs>=1){fiber-=2;crumbs--;crafts++;message('Shelter crafted! It gives a small safe resting spot.');}else message('Need 2 fibre scraps and 1 food crumb to craft a shelter.');}
+function hurt(amount,why){if(damageCooldown>0)return;health=Math.max(0,health-amount);damageCooldown=1.1;message(why);if(health<=0)endRun(why);}
+function endRun(reason){if(dead)return;dead=true;running=false;ui('deathReason').textContent=reason;ui('finalTime').textContent=Math.floor(elapsed)+' seconds';ui('finalItems').textContent=items;ui('death').classList.remove('hidden');}
+function event(name){activeHazard=name;message(name);}
+let catHeading=.8,catWanderTimer=0,catStepPhase=0,catPath=[],catPathIndex=0,catPathTimer=0,catLastTarget=new THREE.Vector3(999,0,999);
+// Grid-based pathfinding lets the cat navigate around sofas, tables, walls and doorways.
+const CAT_GRID={minX:-14.25,minZ:-10.25,step:.5,nx:58,nz:30};
+function catNodePos(id){const gx=id%CAT_GRID.nx,gz=Math.floor(id/CAT_GRID.nx);return {x:CAT_GRID.minX+gx*CAT_GRID.step,z:CAT_GRID.minZ+gz*CAT_GRID.step};}
+function catNodeId(gx,gz){return gz*CAT_GRID.nx+gx;}
+function catFindPath(sx,sz,tx,tz){
+ const {minX,minZ,step,nx,nz}=CAT_GRID,total=nx*nz;
+ const valid=new Uint8Array(total),prev=new Int32Array(total);prev.fill(-2);
+ for(let gz=0;gz<nz;gz++)for(let gx=0;gx<nx;gx++){const id=catNodeId(gx,gz),x=minX+gx*step,z=minZ+gz*step;if(x>-14.15&&x<14.15&&z>-10.15&&z<4.55&&!entityBlocked(x,z,.61))valid[id]=1;}
+ function nearestFree(x,z,maxDist){let best=-1,bd=maxDist*maxDist;for(let id=0;id<total;id++)if(valid[id]){const q=catNodePos(id),d=(q.x-x)**2+(q.z-z)**2;if(d<bd){bd=d;best=id;}}return best;}
+ const start=nearestFree(sx,sz,2.2);if(start<0)return [];
+ const goal=nearestFree(tx,tz,1.8);if(goal<0)return [];
+ const queue=new Int32Array(total);let head=0,tail=0;queue[tail++]=start;prev[start]=-1;
+ const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+ while(head<tail){const id=queue[head++];if(id===goal)break;const gx=id%nx,gz=Math.floor(id/nx);
+  for(const [dx,dz] of dirs){const x=gx+dx,z=gz+dz;if(x<0||x>=nx||z<0||z>=nz)continue;const ni=catNodeId(x,z);if(!valid[ni]||prev[ni]!==-2)continue;prev[ni]=id;queue[tail++]=ni;}
+ }
+ if(prev[goal]===-2)return [];
+ const ids=[];for(let id=goal;id!==-1;id=prev[id])ids.push(id);ids.reverse();return ids.slice(1).map(catNodePos);
+}
+function updateCat(dt){
+ catTimer+=dt;catPathTimer-=dt;catWanderTimer-=dt;
+ const dx=player.position.x-cat.position.x,dz=player.position.z-cat.position.z,d=Math.hypot(dx,dz);
+ const hunting=d<14.5;
+ if(hunting){
+  const targetMoved=Math.hypot(player.position.x-catLastTarget.x,player.position.z-catLastTarget.z)>.85;
+  if(catPathTimer<=0||targetMoved){catPath=catFindPath(cat.position.x,cat.position.z,player.position.x,player.position.z);catPathIndex=0;catPathTimer=.75;catLastTarget.set(player.position.x,0,player.position.z);}
+  let vx=0,vz=0;
+  while(catPathIndex<catPath.length){const wp=catPath[catPathIndex],wx=wp.x-cat.position.x,wz=wp.z-cat.position.z;if(Math.hypot(wx,wz)<.22){catPathIndex++;continue;}const m=Math.hypot(wx,wz)||1;vx=wx/m;vz=wz/m;break;}
+  if(catPathIndex<catPath.length){const speed=d<3.5?2.55:2.15;const moved=moveEntityWithCollision(cat,vx*speed*dt,vz*speed*dt,.61);if(!moved)catPathTimer=0;cat.rotation.y=Math.atan2(vx,vz);}
+ }else{
+  catPath=[];
+  if(catWanderTimer<=0){catHeading+=(Math.random()-.5)*2.4;catWanderTimer=1.5+Math.random()*2.5;}
+  const vx=Math.sin(catHeading),vz=Math.cos(catHeading);if(moveEntityWithCollision(cat,vx*.75*dt,vz*.75*dt,.61))cat.rotation.y=Math.atan2(vx,vz);else{catHeading+=1.7;catWanderTimer=.2;}
+ }
+ // The cat can use the whole house, but cannot cross solid walls or furniture.
+ cat.position.x=clamp(cat.position.x,-14.15,14.15);cat.position.z=clamp(cat.position.z,-10.15,4.55);
+ const moving=hunting?(catPathIndex<catPath.length):catWanderTimer>0;
+ catStepPhase+=dt*(moving?(d<3.5?13:9):2.2);
+ const gait=moving?Math.sin(catStepPhase)*.48:Math.sin(catStepPhase)*.025;
+ catLegs[0].rotation.x=gait;catLegs[1].rotation.x=-gait;catLegs[2].rotation.x=-gait;catLegs[3].rotation.x=gait;
+ catHead.rotation.x=Math.sin(elapsed*1.8)*.035;catHead.rotation.y=hunting?Math.sin(elapsed*3)*.025:Math.sin(elapsed*.8)*.12;
+ tailGroup.rotation.x=Math.sin(elapsed*2.3)*.18;tailGroup.rotation.z=Math.sin(elapsed*1.6)*.22;
+ cat.position.y=.05+(moving?Math.abs(Math.sin(catStepPhase*2))*.035:0);
+ // A close approach is a real catch, even if the tiny player moves beneath the cat model.
+ if(d<1.22)hurt(24,'THE CAT CAUGHT YOU! Run, hide or climb onto furniture!');
+}
+function updateVacuum(dt){if(vacTimer>0){vacTimer-=dt;const path=Math.sin(elapsed*1.25);vacuum.position.x=-8+path*4.3;vacuum.position.z=-.8+Math.cos(elapsed*.7)*1.4;const d=distance2(vacuum.position,player.position);if(d<1.55)hurt(24,'The vacuum cleaner caught you! Find cover!');}else{vacuum.position.x=-13;vacuum.position.z=0;}}
+function updateFeet(dt){
+ if(footTimer>0){footTimer-=dt;dad.visible=true;
+  // Dad walks back and forth INSIDE the living room, not outside the house.
+  const phase=(elapsed%18)/18;const t=phase<.5?phase*2:2-phase*2;
+  dad.position.x=-13+t*9.7;dad.position.z=3.55;dad.rotation.y=phase<.5?Math.PI/2:-Math.PI/2;
+  const gait=Math.sin(elapsed*8);dadLegL.rotation.x=gait*.5;dadLegR.rotation.x=-gait*.5;dadArmL.rotation.x=-gait*.3;dadArmR.rotation.x=gait*.3;
+  // Measure the actual shoe positions in world space (including each leg's pivot).
+  const left=dadLegL.localToWorld(new THREE.Vector3(0,-1.9,.42));
+  const right=dadLegR.localToWorld(new THREE.Vector3(0,-1.9,.42));
+  if(distance2(left,player.position)<1.25||distance2(right,player.position)<1.25)hurt(38,'DAD ALMOST STEPPED ON YOU! Get away from his feet!');
+ }else{dad.visible=false;dadLegL.rotation.x=dadLegR.rotation.x=dadArmL.rotation.x=dadArmR.rotation.x=0;}
+}
+function updateInsects(dt){for(const i of insects){i.dir+=Math.sin(elapsed+i.g.position.x)*dt*.6;i.g.position.x+=Math.sin(i.dir)*i.speed*dt;i.g.position.z+=Math.cos(i.dir)*i.speed*dt;i.g.position.x=clamp(i.g.position.x,-13.5,13.5);i.g.position.z=clamp(i.g.position.z,-9.5,9.5);if(distance2(i.g.position,player.position)<.35)hurt(5,'An insect startled you!');}}
+function spawnInsect(){makeInsect(clamp(player.position.x+(Math.random()-.5)*7,-13,13),clamp(player.position.z+(Math.random()-.5)*7,-9,9));if(insects.length>12){const old=insects.shift();world.remove(old.g);}message('You hear tiny movement nearby...');}
+function randomEvent(){const r=Math.random();if(r<.28){event('A cat is wandering nearby!');}else if(r<.53){vacTimer=13;event('MOM STARTED THE VACUUM!');}else if(r<.78){footTimer=14;event('DAD IS WALKING THROUGH THE LIVING ROOM! Watch out for his footsteps!');}else if(r<.9){spawnInsect();}else{addPickup('crumb',clamp(player.position.x+(Math.random()-.5)*4,-13,13),clamp(player.position.z+(Math.random()-.5)*4,-9,9));event('Something fell nearby. A crumb might be useful!');}}
+function scheduledEvent(){const cycle=Math.floor(elapsed/75)%4;if(cycle===0){footTimer=16;event('DAD IS WALKING THROUGH THE LIVING ROOM! Watch his footsteps!');}else if(cycle===1){vacTimer=13;event('SCHEDULED EVENT: MOM STARTED THE VACUUM!');}else if(cycle===2){spawnInsect();event('SCHEDULED EVENT: Insects are active.');}else{event('SCHEDULED EVENT: The house is quiet... for now.');}}
+function bathtubCheck(){
+ const x=player.position.x,z=player.position.z;const inTub=x>6.55&&x<11.45&&z>-8.55&&z<-6.05&&player.position.y<1.3;
+ if(inTub){stamina=Math.max(0,stamina-5*dtSafe);if(!inTubNotice){message('YOU FELL INTO THE BATHTUB! Jump toward the rim to climb out!');inTubNotice=true;}if(stamina<=0)hurt(8,'You are exhausted in the bathtub!');}else inTubNotice=false;
+}
+let dtSafe=0,inTubNotice=false;
+function update(dt){if(!running)return;dtSafe=dt;elapsed+=dt;damageCooldown=Math.max(0,damageCooldown-dt);hunger=Math.max(0,hunger-dt*.55);thirst=Math.max(0,thirst-dt*.85);if(hunger===0||thirst===0)hurt(3*dt,'You are running out of food or water!');if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)ui('notice').classList.remove('show');}movePlayer(dt);updateCat(dt);updateVacuum(dt);updateFeet(dt);updateInsects(dt);bathtubCheck();eventTimer-=dt;scheduledTimer-=dt;if(eventTimer<=0){randomEvent();eventTimer=24+Math.random()*25;}if(scheduledTimer<=0){scheduledEvent();scheduledTimer=75;}if(elapsed%1<dt)updateHUD();ui('roomName').textContent=room();ui('hint').textContent='Crumbs: '+crumbs+'  Water: '+water+'  Fibre: '+fiber+'  |  Find supplies and stay alert.';updateCamera(dt);}
+function loop(now){requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.05);last=now;if(running)update(dt);renderer.render(scene,camera);}requestAnimationFrame(loop);
+function start(){health=hunger=thirst=stamina=100;items=crumbs=water=fiber=crafts=0;elapsed=0;dead=false;running=true;player.position.set(-5.45,.08,2.65);verticalVelocity=0;grounded=true;jumpQueued=false;playerLegL.rotation.x=playerLegR.rotation.x=playerArmL.rotation.x=playerArmR.rotation.x=0;dad.visible=false;dad.position.set(-13,0,3.55);cat.position.set(-12,.05,-1.8);catHeading=.8;catWanderTimer=0;catStepPhase=0;catPath=[];catPathIndex=0;catPathTimer=0;catLastTarget.set(999,0,999);vacTimer=footTimer=0;eventTimer=18;scheduledTimer=10;damageCooldown=0;ui('death').classList.add('hidden');ui('startMenu').classList.add('hidden');ui('hud').classList.remove('hidden');message('Stay small. Stay alert. Survive.');updateHUD();}
+ui('startBtn').onclick=start;ui('restartBtn').onclick=start;ui('howBtn').onclick=()=>ui('howText').classList.toggle('hidden');ui('useBtn').onclick=interact;ui('eatBtn').onclick=consume;ui('craftBtn').onclick=craft;ui('jumpBtn').onclick=()=>{if(running&&grounded)jumpQueued=true;};ui('runBtn').onpointerdown=()=>runHeld=true;ui('runBtn').onpointerup=()=>runHeld=false;ui('runBtn').onpointerleave=()=>runHeld=false;
+window.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE')interact();if(e.code==='KeyF')consume();if(e.code==='KeyC')craft();if(e.code==='Space'&&running&&grounded)jumpQueued=true;});window.addEventListener('keyup',e=>keys[e.code]=false);
+const joyEl=ui('joy'),stick=ui('stick');function joyMove(e){const r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const max=35,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max;}joy.x=dx/max;joy.y=dy/max;stick.style.transform=`translate(${dx}px,${dy}px)`;}joyEl.addEventListener('pointerdown',e=>{joy.active=true;joyEl.setPointerCapture(e.pointerId);joyMove(e);});joyEl.addEventListener('pointermove',e=>{if(joy.active)joyMove(e);});function joyEnd(){joy.active=false;joy.x=joy.y=0;stick.style.transform='translate(0,0)';}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){dragging=true;lastX=e.clientX;lastY=e.clientY;}});window.addEventListener('pointerup',()=>dragging=false);window.addEventListener('pointermove',e=>{if(dragging){cameraYaw-=(e.clientX-lastX)*.006;cameraPitch=clamp(cameraPitch+(e.clientY-lastY)*.003,-.15,.8);lastX=e.clientX;lastY=e.clientY;}});
+// Two-finger-free touch camera drag on the world area (joystick/buttons retain their own gestures).
+let touchCam=null;renderer.domElement.addEventListener('touchstart',e=>{if(e.touches.length===1){touchCam={x:e.touches[0].clientX,y:e.touches[0].clientY};}},{passive:true});renderer.domElement.addEventListener('touchmove',e=>{if(touchCam&&e.touches.length===1){const t=e.touches[0];cameraYaw-=(t.clientX-touchCam.x)*.006;cameraPitch=clamp(cameraPitch+(t.clientY-touchCam.y)*.003,-.15,.8);touchCam={x:t.clientX,y:t.clientY};}},{passive:true});renderer.domElement.addEventListener('touchend',()=>touchCam=null,{passive:true});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));});
+// Initial camera framing.
+camera.position.set(-4,4,8);camera.lookAt(player.position);
+})();
+</script>
+</body>
+</html>
